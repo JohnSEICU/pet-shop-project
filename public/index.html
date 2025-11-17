@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Shop - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container login-container">
+        <h1>🐾 Pet Shop Login</h1>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required placeholder="Introdu username-ul">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Parola:</label>
+                <input type="password" id="password" name="password" required placeholder="Introdu parola">
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+        
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success"></div>
+        
+        <div style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+            <p><strong>Conturi de test:</strong></p>
+            <p>Username: <strong>admin</strong> | Parola: <strong>parola123</strong></p>
+            <p>Username: <strong>john_doe</strong> | Parola: <strong>parola123</strong></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

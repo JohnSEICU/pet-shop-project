@@ -1,0 +1,42 @@
+const express = require("express");
+const router = express.Router();
+const db = require("../config/db");
+const bcrypt = require("bcrypt");
+
+// REGISTER
+router.post("/register", async (req, res) => {
+    const { Username, Email, Password, Role } = req.body;
+
+    const hashedPassword = await bcrypt.hash(Password, 10);
+
+    const sql = `
+        INSERT INTO Users (Username, Email, Password, Role, CreatedAt)
+        VALUES (?, ?, ?, ?, NOW())
+    `;
+
+    db.query(sql, [Username, Email, hashedPassword, Role], (err, result) => {
+        if (err) return res.status(500).json({ error: err });
+        res.json({ message: "User created!", userId: result.insertId });
+    });
+});
+
+// LOGIN
+router.post("/login", (req, res) => {
+    const { Email, Password } = req.body;
+
+    const sql = `SELECT * FROM Users WHERE Email = ?`;
+
+    db.query(sql, [Email], async (err, results) => {
+        if (err) return res.status(500).json({ error: err });
+        if (results.length === 0) return res.status(400).json({ error: "User not found" });
+
+        const user = results[0];
+        const match = await bcrypt.compare(Password, user.Password);
+
+        if (!match) return res.status(401).json({ error: "Incorrect password" });
+
+        res.json({ message: "Logged in!", userId: user.UserID, role: user.Role });
+    });
+});
+
+module.exports = router;

@@ -1,0 +1,13 @@
+const mysql = require("mysql2");
+require('dotenv').config();
+
+const db = mysql.createPool({
+    host: process.env.db_host || "localhost", // ← change to your host if needed
+    user: process.env.db_user || "root",
+    password: process.env.db_password || "Popescu.99!john",     // ← add your MySQL password if you have one
+    database: process.env.db_name || "pricopi_robert_alexandru_341b1", // ← change to the name of your database
+    waitForConnections: true,
+    connectionLimit: 10
+});
+
+module.exports = db;
