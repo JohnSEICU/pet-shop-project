@@ -62,7 +62,7 @@ INSERT INTO `Products` (`ProductID`, `Name`, `Description`, `Price`, `Stock`, `C
 (2, 'Jucărie pisici', 'Minge cu surpriză pentru pisici', 15.99, 50, 2, '/images/jucarie_pisici.jpg'),
 (3, 'Șampon pentru animale', 'Șampon delicat pentru blană', 32.00, 30, 3, '/images/sampon.jpg'),
 (4, 'Geantă transport', 'Geantă ergonomică pentru transport', 89.99, 20, 4, '/images/geanta.jpg'),
-(5, 'Vitamine pentru păsări', 'Suplimente vitaminice pentru păsări', 25.50, 40, 5, '/images/vitamine.jpg');
+(5, 'Vitamine pentru păsări', 'Suplimente pentru păsări', 25.50, 40, 5, '/images/vitamine.jpg');
 
 -- 7. Suppliers - 5 înregistrări
 INSERT INTO `Suppliers` (`SupplierID`, `Name`, `ContactEmail`, `Phone`, `Address`) VALUES
@@ -77,7 +77,7 @@ INSERT INTO `Services` (`ServiceID`, `Name`, `Description`, `Price`, `DurationMi
 (1, 'Tuns și aranjare', 'Tuns și aranjare profesională a blănii', 80.00, 60),
 (2, 'Vaccinare anuală', 'Vaccinare pentru boli comune', 120.00, 30),
 (3, 'Consult veterinar', 'Consult general veterinar', 50.00, 45),
-(4, 'Pensiuă animal', 'Cazare animal de companie', 40.00, 1440),
+(4, 'Daycare animale', 'Cazare animal de companie', 40.00, 1440),
 (5, 'Baie și grooming', 'Baie completă și aranjare', 65.00, 90);
 
 -- 9. Orders - 5 înregistrări
