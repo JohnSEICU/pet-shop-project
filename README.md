@@ -119,8 +119,8 @@ Deschide Browser-ul și accesează:
 ## Autentificare
 Conturi predefinite pentru testare
 - Admin
- - Username: admin
- - Parola: parola123
+  - Username: admin
+  - Parola: parola123
 - Client:
- - Username: john_doe
- - Parola: parola123
+  - Username: john_doe
+  - Parola: parola123
