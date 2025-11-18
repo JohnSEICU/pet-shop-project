@@ -40,3 +40,7 @@ Thumbs.db
 # Database files (dacă ai)
 *.sqlite
 *.db
+
+# Temporary files
+tmp/
+temp/

@@ -3,31 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Shop - Dashboard</title>
+    <title>Pet Shop - Dashboard Complet</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container home-container">
         <div class="header">
-            <h1>🐾 Dashboard Pet Shop</h1>
+            <h1>🐾 Dashboard Complet Pet Shop</h1>
             <div class="user-info">
                 <span id="userWelcome">Bun venit!</span>
                 <button class="btn logout-btn" onclick="logout()">Logout</button>
+                <button class="btn" onclick="refreshAllData()" style="background: #27ae60; margin-left: 1rem;">🔄 Refresh</button>
             </div>
         </div>
 
+        <!-- Statistici Complete -->
+        <h2>📊 Statistici Complete</h2>
         <div class="stats" id="statsContainer">
-            <!-- Statisticile vor fi populate din JavaScript -->
+            <div class="stat-card">
+                <span class="stat-number" id="statsPets">-</span>
+                <span>Animale</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsProducts">-</span>
+                <span>Produse</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsCustomers">-</span>
+                <span>Clienți</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsSpecies">-</span>
+                <span>Specii</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsCategories">-</span>
+                <span>Categorii</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsSuppliers">-</span>
+                <span>Furnizori</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsServices">-</span>
+                <span>Servicii</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsOrders">-</span>
+                <span>Comenzi</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="statsUsers">-</span>
+                <span>Utilizatori</span>
+            </div>
         </div>
 
-        <h2>🏪 Produsele Noastre</h2>
-        <div class="products-grid" id="productsContainer">
-            <!-- Produsele vor fi populate din JavaScript -->
+        <!-- Navigare rapidă -->
+        <div class="quick-nav">
+            <h2>🔍 Navigare Rapidă</h2>
+            <div class="nav-buttons">
+                <button class="btn nav-btn" onclick="showSection('pets')">🐕 Animale</button>
+                <button class="btn nav-btn" onclick="showSection('products')">🛍️ Produse</button>
+                <button class="btn nav-btn" onclick="showSection('customers')">👥 Clienți</button>
+                <button class="btn nav-btn" onclick="showSection('orders')">📦 Comenzi</button>
+                <button class="btn nav-btn" onclick="showSection('services')">🔧 Servicii</button>
+                <button class="btn nav-btn" onclick="showSection('suppliers')">🏢 Furnizori</button>
+                <button class="btn nav-btn" onclick="showSection('species')">🐾 Specii</button>
+                <button class="btn nav-btn" onclick="showSection('categories')">📁 Categorii</button>
+            </div>
         </div>
 
-        <h2 style="margin-top: 2rem;">🐕 Animale Disponibile</h2>
-        <div class="products-grid" id="petsContainer">
-            <!-- Animalele vor fi populate din JavaScript -->
+        <!-- Secțiuni de date -->
+        <div id="sectionsContainer">
+            <!-- Secțiunea Animale -->
+            <div class="section" id="section-pets">
+                <h2>🐕 Animale Disponibile</h2>
+                <div class="products-grid" id="petsContainer"></div>
+            </div>
+
+            <!-- Secțiunea Produse -->
+            <div class="section" id="section-products">
+                <h2>🛍️ Produsele Noastre</h2>
+                <div class="products-grid" id="productsContainer"></div>
+            </div>
+
+            <!-- Secțiunea Clienți -->
+            <div class="section" id="section-customers">
+                <h2>👥 Clienții Noștri</h2>
+                <div class="table-container" id="customersContainer"></div>
+            </div>
+
+            <!-- Secțiunea Comenzi -->
+            <div class="section" id="section-orders">
+                <h2>📦 Comenzi Recente</h2>
+                <div class="table-container" id="ordersContainer"></div>
+            </div>
+
+            <!-- Secțiunea Servicii -->
+            <div class="section" id="section-services">
+                <h2>🔧 Servicii Oferite</h2>
+                <div class="table-container" id="servicesContainer"></div>
+            </div>
+
+            <!-- Secțiunea Furnizori -->
+            <div class="section" id="section-suppliers">
+                <h2>🏢 Furnizorii Noștri</h2>
+                <div class="table-container" id="suppliersContainer"></div>
+            </div>
+
+            <!-- Secțiunea Specii -->
+            <div class="section" id="section-species">
+                <h2>🐾 Specii de Animale</h2>
+                <div class="table-container" id="speciesContainer"></div>
+            </div>
+
+            <!-- Secțiunea Categorii -->
+            <div class="section" id="section-categories">
+                <h2>📁 Categorii Produse</h2>
+                <div class="table-container" id="categoriesContainer"></div>
+            </div>
         </div>
     </div>
 

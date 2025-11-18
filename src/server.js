@@ -10,7 +10,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Servește fișierele statice
+app.use(express.static('public'));
 
 // Middleware pentru verificare token
 const authenticateToken = (req, res, next) => {
@@ -47,10 +47,7 @@ app.post("/api/login", (req, res) => {
         }
 
         const user = results[0];
-        
-        // Pentru demo, verifică parola simplă
-        // În producție, folosește: await bcrypt.compare(password, user.Password)
-        const validPassword = (password === 'parola123');
+        const validPassword = (password === 'parola123'); // Simplificat pentru demo
 
         if (!validPassword) {
             return res.status(401).json({ error: 'Parolă incorectă' });
@@ -79,27 +76,37 @@ app.post("/api/login", (req, res) => {
     });
 });
 
-// RUTĂ PROTECTATĂ - exemplu profil utilizator
-app.get("/api/profile", authenticateToken, (req, res) => {
+// RUTE EXISTENTE PENTRU API
+app.use("/api/users", require("./routes/users"));
+app.use("/api/customers", require("./routes/customers"));
+app.use("/api/pets", require("./routes/pets"));
+app.use("/api/products", require("./routes/products"));
+app.use("/api/services", require("./routes/services"));
+app.use("/api/suppliers", require("./routes/suppliers"));
+app.use("/api/orders", require("./routes/orders"));
+
+// RUTE COMPLETE PENTRU TOATE TABELELE
+
+// GET all species
+app.get("/api/species", (req, res) => {
     const db = require("./config/db");
-    
-    const sql = "SELECT UserID, Username, Email, Role, CreatedAt FROM Users WHERE UserID = ?";
-    db.query(sql, [req.user.userId], (err, results) => {
+    db.query("SELECT * FROM Species ORDER BY Name", (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
-        
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Utilizator negăsit' });
-        }
-        
-        res.json({
-            user: results[0],
-            message: 'Profil utilizator'
-        });
+        res.json(results);
     });
 });
 
-// STATISTICI PENTRU HOMEPAGE
-app.get("/api/home-stats", (req, res) => {
+// GET all categories
+app.get("/api/categories", (req, res) => {
+    const db = require("./config/db");
+    db.query("SELECT * FROM Categories ORDER BY Name", (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// GET complete dashboard data
+app.get("/api/dashboard", (req, res) => {
     const db = require("./config/db");
     
     const queries = {
@@ -108,6 +115,9 @@ app.get("/api/home-stats", (req, res) => {
         totalCustomers: "SELECT COUNT(*) as count FROM Customers",
         totalSpecies: "SELECT COUNT(*) as count FROM Species",
         totalCategories: "SELECT COUNT(*) as count FROM Categories",
+        totalSuppliers: "SELECT COUNT(*) as count FROM Suppliers",
+        totalServices: "SELECT COUNT(*) as count FROM Services",
+        totalOrders: "SELECT COUNT(*) as count FROM Orders",
         totalUsers: "SELECT COUNT(*) as count FROM Users"
     };
 
@@ -117,23 +127,27 @@ app.get("/api/home-stats", (req, res) => {
         db.promise().query(queries.totalCustomers),
         db.promise().query(queries.totalSpecies),
         db.promise().query(queries.totalCategories),
+        db.promise().query(queries.totalSuppliers),
+        db.promise().query(queries.totalServices),
+        db.promise().query(queries.totalOrders),
         db.promise().query(queries.totalUsers)
     ]).then(([
-        [pets], 
-        [products], 
-        [customers],
-        [species],
-        [categories],
-        [users]
+        [pets], [products], [customers], [species], [categories],
+        [suppliers], [services], [orders], [users]
     ]) => {
         res.json({
-            pets: pets[0].count,
-            products: products[0].count, 
-            customers: customers[0].count,
-            species: species[0].count,
-            categories: categories[0].count,
-            users: users[0].count,
-            message: "Database connection successful! ✅",
+            stats: {
+                pets: pets[0].count,
+                products: products[0].count, 
+                customers: customers[0].count,
+                species: species[0].count,
+                categories: categories[0].count,
+                suppliers: suppliers[0].count,
+                services: services[0].count,
+                orders: orders[0].count,
+                users: users[0].count
+            },
+            message: "Complete dashboard data",
             timestamp: new Date().toISOString()
         });
     }).catch(err => {
@@ -141,36 +155,11 @@ app.get("/api/home-stats", (req, res) => {
     });
 });
 
-// RUTE EXISTENTE PENTRU API
-app.use("/api/users", require("./routes/users"));
-app.use("/api/customers", require("./routes/customers"));
-app.use("/api/pets", require("./routes/pets"));
-app.use("/api/products", require("./routes/products"));
-
-// RUTE PUBLICE SUPLIMENTARE
-app.get("/api/species", (req, res) => {
-    const db = require("./config/db");
-    db.query("SELECT * FROM Species", (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
-});
-
-app.get("/api/categories", (req, res) => {
-    const db = require("./config/db");
-    db.query("SELECT * FROM Categories", (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
-});
-
-app.get("/api/services", (req, res) => {
-    const db = require("./config/db");
-    db.query("SELECT * FROM Services", (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
-});
+// RUTE COMPATIBILITATE - pentru frontend-ul existent
+app.use("/pets", require("./routes/pets"));
+app.use("/products", require("./routes/products"));
+app.use("/customers", require("./routes/customers"));
+app.use("/users", require("./routes/users"));
 
 // RUTĂ PENTRU VERIFICARE SERVER
 app.get("/api/status", (req, res) => {
@@ -182,36 +171,7 @@ app.get("/api/status", (req, res) => {
     });
 });
 
-// RUTĂ PENTRU INFO API
-app.get("/api/info", (req, res) => {
-    res.json({
-        name: "Pet Shop API",
-        version: "1.0.0",
-        author: "Robert Alexandru Pricopi",
-        description: "Sistem de management pentru magazin de animale",
-        endpoints: {
-            auth: {
-                login: "POST /api/login",
-                profile: "GET /api/profile (protected)"
-            },
-            public: {
-                status: "GET /api/status",
-                stats: "GET /api/home-stats",
-                species: "GET /api/species",
-                categories: "GET /api/categories",
-                services: "GET /api/services"
-            },
-            protected: {
-                users: "GET/POST /api/users",
-                customers: "GET/POST /api/customers", 
-                pets: "GET/POST /api/pets",
-                products: "GET/POST /api/products"
-            }
-        }
-    });
-});
-
-// RUTĂ PENTRU PAGINA HOME (după login)
+// RUTĂ PENTRU PAGINA HOME
 app.get("/home", (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
@@ -244,8 +204,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🐾 Pet Shop Server running on port ${PORT}`);
     console.log(`📍 Frontend: http://localhost:${PORT}`);
-    console.log(`🔗 API: http://localhost:${PORT}/api/info`);
+    console.log(`🔗 API Status: http://localhost:${PORT}/api/status`);
     console.log(`🔐 Login: http://localhost:${PORT}/login`);
     console.log(`🏠 Home: http://localhost:${PORT}/home`);
-    console.log(`📊 Stats: http://localhost:${PORT}/api/home-stats`);
 });

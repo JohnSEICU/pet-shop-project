@@ -1,41 +1,56 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const bcrypt = require("bcrypt");
 
-// REGISTER
-router.post("/register", async (req, res) => {
+// GET all users
+router.get("/", (req, res) => {
+    const sql = "SELECT UserID, Username, Email, Role, CreatedAt FROM Users ORDER BY Username";
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// GET user by ID
+router.get("/:id", (req, res) => {
+    const sql = "SELECT UserID, Username, Email, Role, CreatedAt FROM Users WHERE UserID = ?";
+    db.query(sql, [req.params.id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
+// ADD user
+router.post("/", (req, res) => {
     const { Username, Email, Password, Role } = req.body;
-
-    const hashedPassword = await bcrypt.hash(Password, 10);
 
     const sql = `
         INSERT INTO Users (Username, Email, Password, Role, CreatedAt)
         VALUES (?, ?, ?, ?, NOW())
     `;
 
-    db.query(sql, [Username, Email, hashedPassword, Role], (err, result) => {
-        if (err) return res.status(500).json({ error: err });
-        res.json({ message: "User created!", userId: result.insertId });
+    db.query(sql, [Username, Email, Password, Role], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "User added!", id: result.insertId });
     });
 });
 
-// LOGIN
-router.post("/login", (req, res) => {
-    const { Email, Password } = req.body;
-
-    const sql = `SELECT * FROM Users WHERE Email = ?`;
-
-    db.query(sql, [Email], async (err, results) => {
-        if (err) return res.status(500).json({ error: err });
-        if (results.length === 0) return res.status(400).json({ error: "User not found" });
-
-        const user = results[0];
-        const match = await bcrypt.compare(Password, user.Password);
-
-        if (!match) return res.status(401).json({ error: "Incorrect password" });
-
-        res.json({ message: "Logged in!", userId: user.UserID, role: user.Role });
+// UPDATE user
+router.put("/:id", (req, res) => {
+    const { Username, Email, Role } = req.body;
+    
+    const sql = `
+        UPDATE Users 
+        SET Username = ?, Email = ?, Role = ?
+        WHERE UserID = ?
+    `;
+    
+    db.query(sql, [Username, Email, Role, req.params.id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "User updated!" });
     });
 });
 
