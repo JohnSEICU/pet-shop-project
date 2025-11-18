@@ -82,7 +82,7 @@ cd pet-shop-project
 
 # Instalează dependințele
 npm install
-
+```
 ### 3. Configurare Bază de Date
 
 # Pornește MySQL Server
@@ -97,12 +97,12 @@ DB_PASSWORD=
 DB_NAME=pricopi_robert_alexandru_341b1
 PORT=3000
 JWT_SECRET=secret_key_pet_shop_robert_341b1
-
+```
 ### 4. Populare Bază de Date
 ```bash
 # Rulează scriptul de populare
 npm run populate
-
+```
 ###  5. Pornire Aplicație
 ```bash
 # Mod development cu auto-reload
@@ -110,7 +110,7 @@ npm run dev
 
 # Sau mod production
 npm start
-
+```
 ### 6. Accesare Aplicație
 Deschide Browser-ul și accesează:
 - Aplicație: http://localhost:3000
