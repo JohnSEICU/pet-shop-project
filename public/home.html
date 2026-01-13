@@ -23,22 +23,33 @@
                 <button onclick="loadAdminData('suppliers')">Furnizori</button>
                 <button onclick="loadAdminData('services')">Servicii</button>
                 <button onclick="loadAdminData('orders')">Comenzi</button>
+                <button onclick="loadAdminData('services/appointments')">Programari (Join #5)</button>
             </div>
             
             <div id="crud-area">
                 <h3>Adauga Intrare</h3>
                 <form id="admin-form"></form>
             </div>
+
+            <!-- SEARCH (Variable Param) -->
+            <div style="margin: 20px 0; padding: 10px; background: #ecf0f1; border-radius: 5px;">
+                <h4>Cauta Produs (Parametru Variabil)</h4>
+                <input type="text" id="search-input" placeholder="Nume produs..." style="width: 200px;">
+                <button onclick="searchProduct()">Cauta</button>
+            </div>
             
             <div id="data-display" class="table-container"></div>
 
             <div class="reports-area">
                 <h3>Rapoarte SQL Complexe</h3>
-                <button onclick="fetchReport('products/reports/expensive')">Produse peste medie (Subcerere)</button>
-                <button onclick="fetchReport('products/reports/unused')">Produse necomandate (Subcerere - NOT IN)</button>
-                <button onclick="fetchReport('customers/reports/top-spender')">Clientul Top Cheltuitor (Subcerere)</button>
-                <button onclick="fetchReport('products/reports/with-suppliers')">Produse & Furnizori (M:M Join)</button>
-                <div id="report-result"></div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="fetchReport('products/reports/expensive')">1. Produse Scumpe (>Avg)</button>
+                    <button onclick="fetchReport('products/reports/unused')">2. Produse Necomandate (NOT IN)</button>
+                    <button onclick="fetchReport('customers/reports/top-spender')">3. Top Client (Agg + Subquery)</button>
+                    <button onclick="fetchReport('products/reports/low-stock')">4. Stoc Mic (< Avg) [NOU]</button>
+                    <button onclick="fetchReport('products/reports/with-suppliers')">5. Produse & Furnizori (Join)</button>
+                </div>
+                <div id="report-result" style="margin-top: 15px;"></div>
             </div>
         </div>
 

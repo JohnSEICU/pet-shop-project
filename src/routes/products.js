@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// GET ALL (Join Categories)
+// JOIN #1: Products + Categories
 router.get('/', (req, res) => {
     const sql = `
         SELECT P.*, C.Name as CategoryName 
@@ -15,7 +15,22 @@ router.get('/', (req, res) => {
     });
 });
 
-// SUBQUERY: Expensive Products (Produse peste media de pret)
+// PARAMETRU VARIABIL: Cautare produs dupa nume (LIKE)
+router.get('/search', (req, res) => {
+    const keyword = req.query.q; // Variabila din URL
+    const sql = `
+        SELECT P.*, C.Name as CategoryName 
+        FROM Products P 
+        LEFT JOIN Categories C ON P.CategoryID = C.CategoryID
+        WHERE P.Name LIKE ?
+    `;
+    db.query(sql, [`%${keyword}%`], (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+// COMPLEX #1: Expensive (Subquery)
 router.get('/reports/expensive', (req, res) => {
     const sql = 'SELECT Name, Price FROM Products WHERE Price > (SELECT AVG(Price) FROM Products)';
     db.query(sql, (err, results) => {
@@ -24,8 +39,7 @@ router.get('/reports/expensive', (req, res) => {
     });
 });
 
-// SUBQUERY: Unordered Products (Produse care nu au fost comandate niciodata)
-// INLOCUIESTE "Furnizori fara animale"
+// COMPLEX #2: Unused (Subquery NOT IN)
 router.get('/reports/unused', (req, res) => {
     const sql = 'SELECT Name, Price, Stock FROM Products WHERE ProductID NOT IN (SELECT DISTINCT ProductID FROM Order_Items)';
     db.query(sql, (err, results) => {
@@ -34,7 +48,16 @@ router.get('/reports/unused', (req, res) => {
     });
 });
 
-// JOIN: Products & Suppliers (M:M via Product_Suppliers)
+// COMPLEX #4: Low Stock (Subquery AVG - NOU)
+router.get('/reports/low-stock', (req, res) => {
+    const sql = 'SELECT Name, Stock FROM Products WHERE Stock < (SELECT AVG(Stock) FROM Products)';
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+// JOIN #2: Products + Suppliers
 router.get('/reports/with-suppliers', (req, res) => {
     const sql = `
         SELECT P.Name as Product, S.Name as Supplier, PS.SupplyPrice 
@@ -48,7 +71,7 @@ router.get('/reports/with-suppliers', (req, res) => {
     });
 });
 
-// Admin ADD
+// CRUD Operations...
 router.post('/', (req, res) => {
     const { Name, Price, Stock, CategoryID, Description } = req.body;
     const sql = 'INSERT INTO Products (Name, Price, Stock, CategoryID, Description) VALUES (?, ?, ?, ?, ?)';
@@ -58,7 +81,6 @@ router.post('/', (req, res) => {
     });
 });
 
-// Admin UPDATE (Adaugat pentru a permite modificarea stocului manual)
 router.put('/:id', (req, res) => {
     const { Name, Price, Stock, CategoryID, Description } = req.body;
     const sql = 'UPDATE Products SET Name = ?, Price = ?, Stock = ?, CategoryID = ?, Description = ? WHERE ProductID = ?';
@@ -68,7 +90,6 @@ router.put('/:id', (req, res) => {
     });
 });
 
-// Admin DELETE
 router.delete('/:id', (req, res) => {
     db.query('DELETE FROM Products WHERE ProductID = ?', [req.params.id], (err) => {
         if (err) return res.status(500).json(err);

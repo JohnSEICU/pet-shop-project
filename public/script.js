@@ -69,10 +69,31 @@ async function loadAdminData(entity) {
     } catch (e) { console.error(e); }
 }
 
+// Search Function (Variable Parameter)
+async function searchProduct() {
+    const term = document.getElementById('search-input').value;
+    try {
+        const res = await fetch(`${API_URL}/products/search?q=${term}`);
+        const data = await res.json();
+        const container = document.getElementById('data-display');
+        
+        if (!data.length) { container.innerHTML = '<p>Niciun produs gasit.</p>'; return; }
+
+        const keys = Object.keys(data[0]);
+        let html = `<table><thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead><tbody>`;
+        html += data.map(row => `<tr>${keys.map(k => `<td>${row[k]}</td>`).join('')}</tr>`).join('');
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch (e) { console.error(e); }
+}
+
 function setupForm(entity) {
     const form = document.getElementById('admin-form');
     form.innerHTML = '';
     
+    // Simplistic handling for 'services/appointments' which is read-only
+    if (entity.includes('/')) { form.innerHTML = '<p>Vizualizare doar.</p>'; return; }
+
     let fields = [];
     if(entity === 'products') fields = ['Name', 'Price', 'Stock', 'CategoryID', 'Description'];
     if(entity === 'pets') fields = ['Name', 'Age', 'Gender', 'Price', 'SpeciesID'];
@@ -127,7 +148,7 @@ async function deleteItem(entity, id) {
         const res = await fetch(`${API_URL}/${entity}/${id}`, { method: 'DELETE' });
         const d = await res.json();
         if(res.ok && d.success) loadAdminData(entity);
-        else alert('Eroare: ' + (d.error || 'Operatiune esuata'));
+        else alert('Eroare: ' + (d.error || d.sqlMessage || 'Operatiune esuata'));
     }
 }
 
@@ -144,7 +165,6 @@ async function fetchReport(ep) {
 // --- SHOP (USER) ---
 async function loadUserShop() {
     try {
-        // PRODUSE
         const pRes = await fetch(`${API_URL}/products`);
         const prods = await pRes.json();
         document.getElementById('shop-products').innerHTML = prods.map(p => `
@@ -159,10 +179,8 @@ async function loadUserShop() {
             </div>
         `).join('');
 
-        // ANIMALE (Doar cele disponibile!)
         const ptRes = await fetch(`${API_URL}/pets`);
         const pets = await ptRes.json();
-        // Filtram aici Available == 1
         const availablePets = pets.filter(p => p.Available === 1);
         
         if (availablePets.length === 0) {
@@ -178,7 +196,6 @@ async function loadUserShop() {
             `).join('');
         }
         
-        // COMENZI
         if(currentUser.CustomerID) {
             const oRes = await fetch(`${API_URL}/orders/my-orders/${currentUser.CustomerID}`);
             const orders = await oRes.json();
@@ -212,7 +229,7 @@ async function performOrder(url, body) {
         const d = await res.json();
         if(d.success) {
             alert(d.message);
-            loadUserShop(); // Refresh pentru a ascunde animalul adoptat / scadea stocul
+            loadUserShop();
         } else {
             alert('Eroare: ' + d.error);
         }
