@@ -1,73 +1,79 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../config/db");
+const db = require('../config/db');
 
-// GET all products + categories
-router.get("/", (req, res) => {
+// GET ALL (Join Categories)
+router.get('/', (req, res) => {
     const sql = `
-        SELECT Products.*, Categories.Name AS CategoryName
-        FROM Products
-        JOIN Categories ON Products.CategoryID = Categories.CategoryID
-        ORDER BY Products.Name
+        SELECT P.*, C.Name as CategoryName 
+        FROM Products P 
+        LEFT JOIN Categories C ON P.CategoryID = C.CategoryID
     `;
     db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// GET product by ID
-router.get("/:id", (req, res) => {
-    const sql = `
-        SELECT Products.*, Categories.Name AS CategoryName
-        FROM Products
-        JOIN Categories ON Products.CategoryID = Categories.CategoryID
-        WHERE Products.ProductID = ?
-    `;
-    db.query(sql, [req.params.id], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        res.json(results[0]);
+// SUBQUERY: Expensive Products (Produse peste media de pret)
+router.get('/reports/expensive', (req, res) => {
+    const sql = 'SELECT Name, Price FROM Products WHERE Price > (SELECT AVG(Price) FROM Products)';
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
     });
 });
 
-// ADD product
-router.post("/", (req, res) => {
-    const { Name, Description, Price, Stock, CategoryID, ImageURL } = req.body;
-
-    const sql = `
-        INSERT INTO Products (Name, Description, Price, Stock, CategoryID, ImageURL)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(sql,
-        [Name, Description, Price, Stock, CategoryID, ImageURL],
-        (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: "Product added!", id: result.insertId });
-        }
-    );
+// SUBQUERY: Unordered Products (Produse care nu au fost comandate niciodata)
+// INLOCUIESTE "Furnizori fara animale"
+router.get('/reports/unused', (req, res) => {
+    const sql = 'SELECT Name, Price, Stock FROM Products WHERE ProductID NOT IN (SELECT DISTINCT ProductID FROM Order_Items)';
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
 });
 
-// UPDATE product
-router.put("/:id", (req, res) => {
-    const { Name, Description, Price, Stock, CategoryID, ImageURL } = req.body;
-    
+// JOIN: Products & Suppliers (M:M via Product_Suppliers)
+router.get('/reports/with-suppliers', (req, res) => {
     const sql = `
-        UPDATE Products 
-        SET Name = ?, Description = ?, Price = ?, Stock = ?, CategoryID = ?, ImageURL = ?
-        WHERE ProductID = ?
+        SELECT P.Name as Product, S.Name as Supplier, PS.SupplyPrice 
+        FROM Products P 
+        JOIN Product_Suppliers PS ON P.ProductID = PS.ProductID 
+        JOIN Suppliers S ON PS.SupplierID = S.SupplierID
     `;
-    
-    db.query(sql,
-        [Name, Description, Price, Stock, CategoryID, ImageURL, req.params.id],
-        (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: "Product updated!" });
-        }
-    );
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+// Admin ADD
+router.post('/', (req, res) => {
+    const { Name, Price, Stock, CategoryID, Description } = req.body;
+    const sql = 'INSERT INTO Products (Name, Price, Stock, CategoryID, Description) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [Name, Price, Stock, CategoryID, Description], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ success: true });
+    });
+});
+
+// Admin UPDATE (Adaugat pentru a permite modificarea stocului manual)
+router.put('/:id', (req, res) => {
+    const { Name, Price, Stock, CategoryID, Description } = req.body;
+    const sql = 'UPDATE Products SET Name = ?, Price = ?, Stock = ?, CategoryID = ?, Description = ? WHERE ProductID = ?';
+    db.query(sql, [Name, Price, Stock, CategoryID, Description, req.params.id], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ success: true });
+    });
+});
+
+// Admin DELETE
+router.delete('/:id', (req, res) => {
+    db.query('DELETE FROM Products WHERE ProductID = ?', [req.params.id], (err) => {
+        if (err) return res.status(500).json(err);
+        res.json({ success: true });
+    });
 });
 
 module.exports = router;

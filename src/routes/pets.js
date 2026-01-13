@@ -1,81 +1,79 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../config/db");
+const db = require('../config/db');
 
-// GET all pets + species
-router.get("/", (req, res) => {
+// GET ALL
+router.get('/', (req, res) => {
     const sql = `
-        SELECT Pets.*, Species.Name AS SpeciesName
-        FROM Pets
-        JOIN Species ON Pets.SpeciesID = Species.SpeciesID
-        ORDER BY Pets.Name
+        SELECT P.*, S.Name as SpeciesName 
+        FROM Pets P 
+        LEFT JOIN Species S ON P.SpeciesID = S.SpeciesID
     `;
     db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// GET pet by ID
-router.get("/:id", (req, res) => {
-    const sql = `
-        SELECT Pets.*, Species.Name AS SpeciesName
-        FROM Pets
-        JOIN Species ON Pets.SpeciesID = Species.SpeciesID
-        WHERE Pets.PetID = ?
-    `;
-    db.query(sql, [req.params.id], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Pet not found' });
-        }
-        res.json(results[0]);
+// Admin ADD
+router.post('/', (req, res) => {
+    const { Name, Age, Gender, Price, SpeciesID } = req.body;
+    const sql = 'INSERT INTO Pets (Name, Age, Gender, Price, SpeciesID, Available) VALUES (?, ?, ?, ?, ?, 1)';
+    db.query(sql, [Name, Age, Gender, Price, SpeciesID], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ success: true, id: result.insertId });
     });
 });
 
-// ADD pet
-router.post("/", (req, res) => {
-    const { Name, Age, Gender, Price, Available, SpeciesID, ImageURL, Description } = req.body;
-
-    const sql = `
-        INSERT INTO Pets (Name, Age, Gender, Price, Available, SpeciesID, ImageURL, Description)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(sql,
-        [Name, Age, Gender, Price, Available, SpeciesID, ImageURL, Description],
-        (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: "Pet added!", id: result.insertId });
-        }
-    );
+// Admin UPDATE
+router.put('/:id', (req, res) => {
+    const { Name, Age, Gender, Price, SpeciesID } = req.body;
+    const sql = 'UPDATE Pets SET Name=?, Age=?, Gender=?, Price=?, SpeciesID=? WHERE PetID=?';
+    db.query(sql, [Name, Age, Gender, Price, SpeciesID, req.params.id], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ success: true });
+    });
 });
 
-// UPDATE pet
-router.put("/:id", (req, res) => {
-    const { Name, Age, Gender, Price, Available, SpeciesID, ImageURL, Description } = req.body;
-    
-    const sql = `
-        UPDATE Pets 
-        SET Name = ?, Age = ?, Gender = ?, Price = ?, Available = ?, SpeciesID = ?, ImageURL = ?, Description = ?
-        WHERE PetID = ?
-    `;
-    
-    db.query(sql,
-        [Name, Age, Gender, Price, Available, SpeciesID, ImageURL, Description, req.params.id],
-        (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ message: "Pet updated!" });
-        }
-    );
-});
+// Admin DELETE (CU TRANZACTIE PENTRU STERGERE DEPENDINTE)
+router.delete('/:id', (req, res) => {
+    const petId = req.params.id;
 
-// DELETE pet
-router.delete("/:id", (req, res) => {
-    const sql = "DELETE FROM Pets WHERE PetID = ?";
-    db.query(sql, [req.params.id], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Pet deleted!" });
+    // Obtinem o conexiune din Pool pentru tranzactie
+    db.getConnection((err, connection) => {
+        if (err) return res.status(500).json({ error: "Database connection failed" });
+
+        connection.beginTransaction(err => {
+            if (err) { connection.release(); return res.status(500).json(err); }
+
+            // 1. Stergem legaturile cu furnizorii (Pet_Suppliers)
+            connection.query('DELETE FROM Pet_Suppliers WHERE PetID = ?', [petId], (err) => {
+                if (err) {
+                    return connection.rollback(() => { connection.release(); res.status(500).json({ error: "Eroare stergere furnizori", details: err }); });
+                }
+
+                // 2. Stergem istoricul de adoptii (Customer_Pets) - daca exista
+                connection.query('DELETE FROM Customer_Pets WHERE PetID = ?', [petId], (err) => {
+                    if (err) {
+                        return connection.rollback(() => { connection.release(); res.status(500).json({ error: "Eroare stergere istoric adoptii", details: err }); });
+                    }
+
+                    // 3. Stergem Animalul efectiv
+                    connection.query('DELETE FROM Pets WHERE PetID = ?', [petId], (err) => {
+                        if (err) {
+                            return connection.rollback(() => { connection.release(); res.status(500).json({ error: "Eroare stergere animal (posibil alte dependinte)", details: err }); });
+                        }
+
+                        connection.commit((err) => {
+                            if (err) return connection.rollback(() => { connection.release(); res.status(500).json(err); });
+                            
+                            connection.release();
+                            res.json({ success: true, message: 'Animal si datele asociate sterse cu succes.' });
+                        });
+                    });
+                });
+            });
+        });
     });
 });
 

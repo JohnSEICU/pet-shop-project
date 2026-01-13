@@ -10,4 +10,15 @@ const db = mysql.createPool({
     connectionLimit: 10
 });
 
+// Wrapper pentru a pastra compatibilitatea cu codul existent care foloseste db.query
+// Pool-ul are metoda .query, deci restul fisierelor vor functiona fara modificari!
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error('Eroare la conectarea la MySQL:', err);
+    } else {
+        console.log('Conectat la MySQL (Pool activ).');
+        connection.release();
+    }
+});
+
 module.exports = db;

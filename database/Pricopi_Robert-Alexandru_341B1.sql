@@ -1,10 +1,14 @@
+DROP DATABASE IF EXISTS pet_shop;
+CREATE DATABASE pet_shop;
+USE pet_shop;
+
 CREATE TABLE `Users` (
   `UserID` int PRIMARY KEY AUTO_INCREMENT,
   `Username` varchar(100),
   `Email` varchar(150),
   `Password` varchar(255),
   `Role` varchar(20),
-  `CreatedAt` datetime
+  `CreatedAt` datetime DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE `Customers` (
@@ -28,7 +32,7 @@ CREATE TABLE `Pets` (
   `Age` int,
   `Gender` varchar(10),
   `Price` decimal(10,2),
-  `Available` boolean,
+  `Available` boolean DEFAULT 1,
   `SpeciesID` int,
   `ImageURL` varchar(255),
   `Description` text
@@ -73,7 +77,7 @@ CREATE TABLE `Pet_Suppliers` (
 CREATE TABLE `Orders` (
   `OrderID` int PRIMARY KEY AUTO_INCREMENT,
   `CustomerID` int,
-  `OrderDate` datetime,
+  `OrderDate` datetime DEFAULT CURRENT_TIMESTAMP,
   `TotalAmount` decimal(10,2),
   `Status` varchar(50)
 );
@@ -107,30 +111,18 @@ CREATE TABLE `Customer_Pets` (
   `PurchaseDate` date
 );
 
+-- Foreign Keys
 ALTER TABLE `Customers` ADD FOREIGN KEY (`UserID`) REFERENCES `Users` (`UserID`);
-
 ALTER TABLE `Pets` ADD FOREIGN KEY (`SpeciesID`) REFERENCES `Species` (`SpeciesID`);
-
 ALTER TABLE `Products` ADD FOREIGN KEY (`CategoryID`) REFERENCES `Categories` (`CategoryID`);
-
-ALTER TABLE `Product_Suppliers` ADD FOREIGN KEY (`ProductID`) REFERENCES `Products` (`ProductID`);
-
+ALTER TABLE `Product_Suppliers` ADD FOREIGN KEY (`ProductID`) REFERENCES `Products` (`ProductID`) ON DELETE CASCADE;
 ALTER TABLE `Product_Suppliers` ADD FOREIGN KEY (`SupplierID`) REFERENCES `Suppliers` (`SupplierID`);
-
-ALTER TABLE `Pet_Suppliers` ADD FOREIGN KEY (`PetID`) REFERENCES `Pets` (`PetID`);
-
+ALTER TABLE `Pet_Suppliers` ADD FOREIGN KEY (`PetID`) REFERENCES `Pets` (`PetID`) ON DELETE CASCADE;
 ALTER TABLE `Pet_Suppliers` ADD FOREIGN KEY (`SupplierID`) REFERENCES `Suppliers` (`SupplierID`);
-
 ALTER TABLE `Orders` ADD FOREIGN KEY (`CustomerID`) REFERENCES `Customers` (`CustomerID`);
-
 ALTER TABLE `Order_Items` ADD FOREIGN KEY (`ProductID`) REFERENCES `Products` (`ProductID`);
-
-ALTER TABLE `Order_Items` ADD FOREIGN KEY (`OrderID`) REFERENCES `Orders` (`OrderID`);
-
+ALTER TABLE `Order_Items` ADD FOREIGN KEY (`OrderID`) REFERENCES `Orders` (`OrderID`) ON DELETE CASCADE;
 ALTER TABLE `Customer_Services` ADD FOREIGN KEY (`CustomerID`) REFERENCES `Customers` (`CustomerID`);
-
 ALTER TABLE `Customer_Services` ADD FOREIGN KEY (`ServiceID`) REFERENCES `Services` (`ServiceID`);
-
 ALTER TABLE `Customer_Pets` ADD FOREIGN KEY (`CustomerID`) REFERENCES `Customers` (`CustomerID`);
-
 ALTER TABLE `Customer_Pets` ADD FOREIGN KEY (`PetID`) REFERENCES `Pets` (`PetID`);
